@@ -1,0 +1,52 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: nominatim
+  namespace: business-service
+  labels:
+    app: nominatim
+spec:
+  ports:
+  - port: 8080
+    name: web
+    protocol: TCP
+  selector:
+    app: nominatim
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nominatim-web
+  namespace: devops
+spec:
+  entryPoints:
+    - web
+  routes:
+  - kind: Rule
+    match: Host(`nominatim.computaceae-it.tech`)
+    services:
+    - name: nominatim
+      port: 8080
+    middlewares:
+      - name: ipwhitelist
+        namespace: traefik
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nominatim-web-tls
+  namespace: devops
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - kind: Rule
+    match: Host(`nominatim.computaceae-it.tech`)
+    services:
+    - name: nominatim
+      port: 8080
+    middlewares:
+      - name: ipwhitelist
+        namespace: traefik
+  tls:
+    certResolver: letsencryptresolver

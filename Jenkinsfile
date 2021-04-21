@@ -19,6 +19,10 @@ node {
 				env.DEPLOY_COMMIT_HASH = sh(returnStdout: true, script: "git rev-parse HEAD | cut -c1-7").trim()
 				env.DEPLOY_BUILD_DATE = sh(returnStdout: true, script: "date -u +'%Y-%m-%dT%H.%M.%SZ'").trim()
 			}
+
+			dir ('k8s') {
+				sh "sed -i \"s|DATE_DEPLOYMENT|${env.DEPLOY_BUILD_DATE}|g\" 004.deployment.yaml"
+			}
 		}
 
 		stage('Build and Push image') {
