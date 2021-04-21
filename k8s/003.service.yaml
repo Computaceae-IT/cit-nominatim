@@ -17,7 +17,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: nominatim-web
-  namespace: devops
+  namespace: business-service
 spec:
   entryPoints:
     - web
@@ -35,7 +35,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: nominatim-web-tls
-  namespace: devops
+  namespace: business-service
 spec:
   entryPoints:
     - websecure
