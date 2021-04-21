@@ -14,6 +14,13 @@ node {
 			checkout scm
 		}
 
+		stage('SED Deployment variable') {
+			script {
+				env.DEPLOY_COMMIT_HASH = sh(returnStdout: true, script: "git rev-parse HEAD | cut -c1-7").trim()
+				env.DEPLOY_BUILD_DATE = sh(returnStdout: true, script: "date -u +'%Y-%m-%dT%H.%M.%SZ'").trim()
+			}
+		}
+
 		stage('Build and Push image') {
 			app = docker.build("registry.computaceae-it.tech/cit-nominatim:${env.DEPLOY_COMMIT_HASH}");
 			app.push()
