@@ -36,6 +36,15 @@ node {
 				stage('Tag image PRD') {
 					app.push("latest")
 				}
+
+				stage('Apply Kubernetes files') {
+					withKubeConfig([credentialsId: 'cit-kube-config']) {
+						dir ('k8s') {
+							sh 'kubectl apply -f 003.service.yaml'
+							sh 'kubectl apply -f 004.deployment.yaml'
+						}
+					}
+				}
 				break;
 		}
 
