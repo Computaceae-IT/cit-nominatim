@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nominatim-ui
+  namespace: business-service
+  labels:
+    app: nominatim-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nominatim-ui
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: nominatim-ui
+        date: DATE_DEPLOYMENT
+    spec:
+      containers:
+      - name: nominatim-ui
+        image: registry.computaceae-it.tech/cit-nominatim-ui
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 15Mi
+          limits:
+            cpu: 500m
+            memory: 50Mi
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+#        startupProbe:
+#          initialDelaySeconds: 30
+#          failureThreshold: 3
+#          periodSeconds: 10
+#          httpGet:
+#            path: /
+#            port: 8080
+#        livenessProbe:
+#          periodSeconds: 30
+#          failureThreshold: 3
+#          timeoutSeconds: 3
+#          httpGet:
+#            path: /
+#            port: 8080
+            

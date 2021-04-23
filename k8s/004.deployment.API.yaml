@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nominatim
+  name: nominatim-api
   namespace: business-service
   labels:
-    app: nominatim
+    app: nominatim-api
 spec:
   replicas: 5
   selector:
     matchLabels:
-      app: nominatim
+      app: nominatim-api
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -18,12 +18,12 @@ spec:
   template:
     metadata:
       labels:
-        app: nominatim
+        app: nominatim-api
         date: DATE_DEPLOYMENT
     spec:
       containers:
-      - name: nominatim
-        image: registry.computaceae-it.tech/cit-nominatim
+      - name: nominatim-api
+        image: registry.computaceae-it.tech/cit-nominatim-api
         imagePullPolicy: Always
         command: ["sh"]
         args: ["/app/startapache.sh"]

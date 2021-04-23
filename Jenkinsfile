@@ -5,7 +5,8 @@ node {
   	])
 
     /* define variable */
-    def app
+    def api
+	def ui
 
 	try {
 
@@ -21,27 +22,40 @@ node {
 			}
 
 			dir ('k8s') {
-				sh "sed -i \"s|DATE_DEPLOYMENT|${env.DEPLOY_BUILD_DATE}|g\" 004.deployment.yaml"
+				sh "sed -i \"s|DATE_DEPLOYMENT|${env.DEPLOY_BUILD_DATE}|g\" 004.deployment.API.yaml"
+				sh "sed -i \"s|DATE_DEPLOYMENT|${env.DEPLOY_BUILD_DATE}|g\" 004.deployment.UI.yaml"
 			}
 		}
 
-		stage('Build and Push image') {
-			app = docker.build("registry.computaceae-it.tech/cit-nominatim:${env.DEPLOY_COMMIT_HASH}");
-			app.push()
+		stage('Build and Push image API') {
+			dir ('API') {
+				api = docker.build("registry.computaceae-it.tech/cit-nominatim-api:${env.DEPLOY_COMMIT_HASH}");
+				api.push()
+			}
+		}
+
+		stage('Build and Push image UI') {
+			dir ('UI') {
+				ui = docker.build("registry.computaceae-it.tech/cit-nominatim-ui:${env.DEPLOY_COMMIT_HASH}");
+				ui.push()
+			}
 		}
 
 		switch (env.BRANCH_NAME) {
 			case "master":
 			case "main":
 				stage('Tag image PRD') {
-					app.push("latest")
+					api.push("latest")
+					ui.push("latest")
 				}
 
 				stage('Apply Kubernetes files') {
 					withKubeConfig([credentialsId: 'cit-kube-config']) {
 						dir ('k8s') {
-							sh 'kubectl apply -f 003.service.yaml'
-							sh 'kubectl apply -f 004.deployment.yaml'
+							sh 'kubectl apply -f 003.service.API.yaml'
+							sh 'kubectl apply -f 004.deployment.API.yaml'
+							sh 'kubectl apply -f 003.service.UI.yaml'
+							sh 'kubectl apply -f 004.deployment.UI.yaml'
 						}
 					}
 				}

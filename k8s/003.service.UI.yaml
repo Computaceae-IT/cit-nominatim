@@ -1,0 +1,52 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: nominatim-ui
+  namespace: business-service
+  labels:
+    app: nominatim-ui
+spec:
+  ports:
+  - port: 8765
+    name: web
+    protocol: TCP
+  selector:
+    app: nominatim-ui
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nominatim-ui-web
+  namespace: business-service
+spec:
+  entryPoints:
+    - web
+  routes:
+  - kind: Rule
+    match: Host(`nominatim.computaceae-it.tech`)
+    services:
+    - name: nominatim-ui
+      port: 8765
+    middlewares:
+      - name: ipwhitelist
+        namespace: traefik
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nominatim-ui-web-tls
+  namespace: business-service
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - kind: Rule
+    match: Host(`nominatim.computaceae-it.tech`)
+    services:
+    - name: nominatim-ui
+      port: 8765
+    middlewares:
+      - name: ipwhitelist
+        namespace: traefik
+  tls:
+    certResolver: letsencryptresolver
