@@ -23,7 +23,7 @@ spec:
     - web
   routes:
   - kind: Rule
-    match: Host(`nominatim.computaceae-it.tech/`) && PathPrefix(`/api/`)
+    match: Host(`nominatim.computaceae-it.tech`) && PathPrefix(`/api/`)
     services:
     - name: nominatim-api
       port: 8080
