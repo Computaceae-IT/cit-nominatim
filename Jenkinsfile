@@ -7,6 +7,7 @@ node {
     /* define variable */
     def api
 	def ui
+	def db
 
 	try {
 
@@ -34,6 +35,13 @@ node {
 			}
 		}
 
+		stage('Build and Push image DB') {
+			dir ('DB') {
+				db = docker.build("registry.computaceae-it.tech/cit-nominatim-db:${env.DEPLOY_COMMIT_HASH}");
+				db.push()
+			}
+		}
+
 		stage('Build and Push image UI') {
 			dir ('UI') {
 				ui = docker.build("registry.computaceae-it.tech/cit-nominatim-ui:${env.DEPLOY_COMMIT_HASH}");
@@ -47,6 +55,7 @@ node {
 				stage('Tag image PRD') {
 					api.push("latest")
 					ui.push("latest")
+					db.push("latest")
 				}
 
 				stage('Apply Kubernetes files') {
