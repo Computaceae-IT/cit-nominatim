@@ -6,15 +6,15 @@ metadata:
   labels:
     app: nominatim-api
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: nominatim-api
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 5
-      maxUnavailable: 3
+      maxSurge: 2
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -33,7 +33,7 @@ spec:
             memory: 15Mi
           limits:
             cpu: 500m
-            memory: 50Mi
+            memory: 500Mi
         ports:
         - name: http
           containerPort: 8080
