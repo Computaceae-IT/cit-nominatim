@@ -6,15 +6,15 @@ metadata:
   labels:
     app: nominatim-api
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: nominatim-api
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 2
-      maxUnavailable: 0
+      maxSurge: 3
+      maxUnavailable: 1
   template:
     metadata:
       labels:
