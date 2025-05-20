@@ -1,6 +1,6 @@
 FROM python:3.9.4-buster
 
-LABEL maintainer="SiropOps <Cyril.Boillat@ville-ge.ch>"
+LABEL maintainer="SiropOps <cyril@botalista.community>"
 
 # Nominatim install.
 ENV NOMINATIM_UI_VERSION 3.0.5

@@ -1,5 +1,22 @@
 # Nominatim Docker (Nominatim version 3.6)
 
+## Manual DB
+
+```
+docker run --name=cit-nominatim-db \
+        --volume /data/nominatim:/var/lib/postgresql/12/main \
+        --env=REPLICATION_URL=http://planet.openstreetmap.org/replication/day/ \
+        --env=NOMINATIM_PASSWORD=<XXX> \
+        --workdir=/app \
+        -p 172.16.0.250:6432:5432 \
+        --restart=always \
+        --log-opt max-size=100m \
+        -e THREADS=16 \
+        --detach=true \
+        registry.computaceae-it.tech/cit-nominatim-db \
+        sh /app/startpostgres.sh
+```
+
 ## Automatic import
 
 Download the required data, initialize the database and start nominatim in one go
