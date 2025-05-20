@@ -13,7 +13,7 @@ spec:
   selector:
     app: nominatim-ui
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: nominatim-ui-web
@@ -28,10 +28,9 @@ spec:
     - name: nominatim-ui
       port: 8765
     middlewares:
-      - name: ipwhitelist
-        namespace: traefik
+    - name: kube-system-ip-whitelist@kubernetescrd
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: nominatim-ui-web-tls
@@ -46,7 +45,6 @@ spec:
     - name: nominatim-ui
       port: 8765
     middlewares:
-      - name: ipwhitelist
-        namespace: traefik
+    - name: kube-system-ip-whitelist@kubernetescrd
   tls:
-    certResolver: letsencryptresolver
+    certResolver: le

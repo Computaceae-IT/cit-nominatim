@@ -13,7 +13,7 @@ spec:
   selector:
     app: nominatim-api
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: nominatim-api-stripprefix
@@ -23,7 +23,7 @@ spec:
     prefixes:
       - /api
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: nominatim-api-web
@@ -38,11 +38,11 @@ spec:
     - name: nominatim-api
       port: 8080
     middlewares:
-      - name: ipwhitelist
-        namespace: traefik
-      - name: nominatim-api-stripprefix
+    - name: kube-system-ip-whitelist@kubernetescrd
+    - name: nominatim-api-stripprefix
+      namespace: business-service
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: nominatim-api-web-tls
@@ -57,8 +57,8 @@ spec:
     - name: nominatim-api
       port: 8080
     middlewares:
-      - name: ipwhitelist
-        namespace: traefik
-      - name: nominatim-api-stripprefix
+    - name: kube-system-ip-whitelist@kubernetescrd
+    - name: nominatim-api-stripprefix
+      namespace: business-service
   tls:
-    certResolver: letsencryptresolver
+    certResolver: le
