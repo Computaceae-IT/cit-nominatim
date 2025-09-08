@@ -63,6 +63,12 @@ RUN pip3 install osmium
 # Nominatim install.
 ENV NOMINATIM_VERSION v3.6.0
 
+ADD db-src.tar.gz /tmp/dbsrc
+
+RUN mkdir -p /app/DB/src \
+ && cp -a /tmp/dbsrc/DB/src/. /app/DB/src/ \
+ && rm -rf /tmp/dbsrc
+
 #    && git clone \
 #        --config advice.detachedHead=false \
 #        --single-branch \
