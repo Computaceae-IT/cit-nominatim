@@ -65,6 +65,8 @@ ENV NOMINATIM_VERSION v3.6.0
 
 ADD db-src.tar.gz /tmp/dbsrc
 
+RUN find /tmp/dbsrc -maxdepth 3 -type d -print
+
 RUN mkdir -p /app/DB/src \
  && cp -a /tmp/dbsrc/DB/src/. /app/DB/src/ \
  && rm -rf /tmp/dbsrc
