@@ -63,15 +63,16 @@ RUN pip3 install osmium
 # Nominatim install.
 ENV NOMINATIM_VERSION v3.6.0
 
+#    && git clone \
+#        --config advice.detachedHead=false \
+#        --single-branch \
+#        --branch $NOMINATIM_VERSION \
+#        --depth 1 \
+#        --recursive \
+#        https://github.com/openstreetmap/Nominatim \
+#        src \
+
 RUN true \
-    && git clone \
-        --config advice.detachedHead=false \
-        --single-branch \
-        --branch $NOMINATIM_VERSION \
-        --depth 1 \
-        --recursive \
-        https://github.com/openstreetmap/Nominatim \
-        src \
     && cd src \
     && mkdir build \
     && cd build \
