@@ -1,0 +1,6 @@
+# Keep Pro credentials outside the repository and build context.
+**/pro-attach-config*.yaml
+**/pro-attach-config*.yml
+**/.env*
+**/*.dump
+**/*.backup

@@ -1,16 +1,26 @@
-FROM ubuntu:focal AS build
+# syntax=docker/dockerfile:1
+ARG UBUNTU_BASE=ubuntu:20.04
+FROM ${UBUNTU_BASE} AS build
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
 
 WORKDIR /app
 
-RUN true \
+COPY verify-php.sh /usr/local/bin/verify-php
+
+# Attach, install and detach in ONE layer; never pass a Pro token as ARG/ENV.
+RUN --mount=type=secret,id=pro-attach-config,required=true \
+    true \
     # Do not start daemons after installation.
     && echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d \
     && chmod +x /usr/sbin/policy-rc.d \
     # Install all required packages.
     && apt-get -y update -qq \
+    && apt-get install --no-install-recommends -y ubuntu-pro-client ca-certificates \
+    && pro attach --attach-config /run/secrets/pro-attach-config \
+    && apt-get update -qq \
+    && apt-get upgrade -y \
     && apt-get -y install \
         locales \
     && locale-gen en_US.UTF-8 \
@@ -36,11 +46,15 @@ RUN true \
         postgresql-12-postgis-3 \
         postgresql-12-postgis-3-scripts \
         # PHP and Apache 2.
-        php \
-        php-intl \
-        php-pgsql \
+        php7.4-cli \
+        php7.4-common \
+        php7.4-intl \
+        php7.4-pgsql \
+        php7.4-json \
+        php7.4-opcache \
+        php7.4-readline \
         apache2 \
-        libapache2-mod-php \
+        libapache2-mod-php7.4 \
         # Python 3.
         python3-dev \
         python3-pip \
@@ -50,7 +64,12 @@ RUN true \
         # Misc.
         git \
         curl \
-        sudo
+        sudo \
+        util-linux \
+    && sh /usr/local/bin/verify-php \
+    && pro detach --assume-yes \
+    && apt-get purge -y ubuntu-pro-client \
+    && rm -rf /var/lib/ubuntu-advantage /var/log/ubuntu-advantage* /var/lib/apt/lists/*
 
 # Configure postgres.
 RUN true \
@@ -63,22 +82,13 @@ RUN pip3 install osmium
 # Nominatim install.
 ENV NOMINATIM_VERSION v3.6.0
 
-ADD db-src.tar.gz /tmp/dbsrc
-
-RUN find /tmp/dbsrc -maxdepth 3 -type d -print
-
-RUN mkdir -p /app/DB/src \
- && cp -a /tmp/dbsrc/src/. /app/src/ \
- && rm -rf /tmp/dbsrc
-
-#    && git clone \
-#        --config advice.detachedHead=false \
-#        --single-branch \
-#        --branch $NOMINATIM_VERSION \
-#        --depth 1 \
-#        --recursive \
-#        https://github.com/openstreetmap/Nominatim \
-#        src \
+# Retain the exact vendored 3.6 source until its PRD provenance is reconciled.
+COPY db-src.tar.gz /tmp/db-src.tar.gz
+RUN echo 'b5fe1446d6ce5a64f8112eff8b6e773a4b8a09b242a902e76f86a5d523a32bc6  /tmp/db-src.tar.gz' | sha256sum -c - \
+    && mkdir -p /tmp/dbsrc /app/src \
+    && tar -xzf /tmp/db-src.tar.gz -C /tmp/dbsrc \
+    && cp -a /tmp/dbsrc/src/. /app/src/ \
+    && rm -rf /tmp/dbsrc /tmp/db-src.tar.gz
 
 RUN true \
     && cd src \
@@ -118,8 +128,8 @@ RUN true \
 COPY conf.d/local.php /app/src/build/settings/local.php
 COPY conf.d/apache.conf /etc/apache2/sites-enabled/000-default.conf
 
-# Postgres config overrides to improve import performance (but reduce crash recovery safety)
-COPY conf.d/postgres-import.conf /etc/postgresql/12/main/conf.d/
+# Runtime tuning only; the import-only configuration must stay out of the image.
+# Never ship fsync=off/full_page_writes=off in the runtime DB image.
 COPY conf.d/postgres-tuning.conf /etc/postgresql/12/main/conf.d/
 
 COPY config.sh /app/config.sh
@@ -127,6 +137,8 @@ COPY init.sh /app/init.sh
 COPY start.sh /app/start.sh
 COPY startapache.sh /app/startapache.sh
 COPY startpostgres.sh /app/startpostgres.sh
+
+RUN sh /usr/local/bin/verify-php
 
 # Collapse image to single layer.
 FROM scratch
@@ -143,4 +155,5 @@ ENV NOMINATIM_PASSWORD qaIACxO6wMR3
 # how many threads should be use for importing
 ENV THREADS=16
 
-CMD /app/start.sh
+ENV NOMINATIM_RUN_UPDATES=false
+CMD ["sh", "/app/startpostgres.sh"]

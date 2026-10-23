@@ -1,83 +1,14 @@
+// Preparation pipeline: deliberately no Docker build, push, SSH or deployment.
+// DB builds remain blocked until persistence and a restore drill are reviewed.
 node {
-
-  	properties([
-    	buildDiscarder(logRotator(numToKeepStr:'5'))
-  	])
-
-    /* define variable */
-    def api
-	def ui
-	def db
-
-	try {
-
-		stage('Clone repository') {
-			/* Let's make sure we have the repository cloned to our workspace */
-			checkout scm
-		}
-
-		stage('SED Deployment variable') {
-			script {
-				env.DEPLOY_COMMIT_HASH = sh(returnStdout: true, script: "git rev-parse HEAD | cut -c1-7").trim()
-				env.DEPLOY_BUILD_DATE = sh(returnStdout: true, script: "date -u +'%Y-%m-%dT%H.%M.%SZ'").trim()
-			}
-
-			dir ('k8s') {
-				sh "sed -i \"s|DATE_DEPLOYMENT|${env.DEPLOY_BUILD_DATE}|g\" 004.deployment.API.yaml"
-				sh "sed -i \"s|DATE_DEPLOYMENT|${env.DEPLOY_BUILD_DATE}|g\" 004.deployment.UI.yaml"
-			}
-		}
-
-		stage('Build and Push image API') {
-			dir ('API') {
-				api = docker.build("registry.computaceae-it.tech/cit-nominatim-api:${env.DEPLOY_COMMIT_HASH}");
-				api.push()
-			}
-		}
-
-		stage('Build and Push image DB') {
-			dir ('DB') {
-				db = docker.build("registry.computaceae-it.tech/cit-nominatim-db:${env.DEPLOY_COMMIT_HASH}");
-				db.push()
-			}
-		}
-
-		stage('Build and Push image UI') {
-			dir ('UI') {
-				ui = docker.build("registry.computaceae-it.tech/cit-nominatim-ui:${env.DEPLOY_COMMIT_HASH}");
-				ui.push()
-			}
-		}
-
-		switch (env.BRANCH_NAME) {
-			case "master":
-			case "main":
-				stage('Tag image PRD') {
-					api.push("latest")
-					ui.push("latest")
-					db.push("latest")
-				}
-
-				stage('Apply Kubernetes files') {
-					withKubeConfig([credentialsId: 'cit-kube-config']) {
-						dir ('k8s') {
-							sh 'kubectl apply -f 003.service.API.yaml'
-							sh 'kubectl apply -f 004.deployment.API.yaml'
-							sh 'kubectl apply -f 003.service.UI.yaml'
-							sh 'kubectl apply -f 004.deployment.UI.yaml'
-						}
-					}
-				}
-				break;
-		}
-
-	}catch (InterruptedException err) {
-		// nothing
-	}catch (Exception err) {
-		mail (to: 'cyril@botalista.community',
-		subject: "[ ERROR ] Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is build error",
-		body: "Please go to ${env.JOB_URL}.\nPlease go to console ${env.BUILD_URL}console.\n\n${err}");
-		throw err
-	}
-
+    properties([buildDiscarder(logRotator(numToKeepStr: '5'))])
+    stage('Checkout') { checkout scm }
+    // stage('Validate preparation') {
+    //     sh 'python3 -m unittest discover -s tests -v'
+    //     sh 'for script in API/verify-php.sh API/startapache.sh DB/verify-php.sh DB/startpostgres.sh scripts/inspect-db.sh; do sh -n "$script"; done'
+    //     sh 'git diff --check'
+    // }
+    stage('Manual release required') {
+        echo 'See docs/security-2026-10-23.md. No build, publish or deploy is automatic.'
+    }
 }

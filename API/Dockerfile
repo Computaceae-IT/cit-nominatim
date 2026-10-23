@@ -1,16 +1,26 @@
-FROM ubuntu:focal AS build
+# syntax=docker/dockerfile:1
+ARG UBUNTU_BASE=ubuntu:20.04
+FROM ${UBUNTU_BASE} AS build
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
 
 WORKDIR /app
 
-RUN true \
+COPY verify-php.sh /usr/local/bin/verify-php
+
+# Attach, install and detach in ONE layer; never pass a Pro token as ARG/ENV.
+RUN --mount=type=secret,id=pro-attach-config,required=true \
+    true \
     # Do not start daemons after installation.
     && echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d \
     && chmod +x /usr/sbin/policy-rc.d \
     # Install all required packages.
     && apt-get -y update -qq \
+    && apt-get install --no-install-recommends -y ubuntu-pro-client ca-certificates \
+    && pro attach --attach-config /run/secrets/pro-attach-config \
+    && apt-get update -qq \
+    && apt-get upgrade -y \
     && apt-get -y install \
         locales \
     && locale-gen en_US.UTF-8 \
@@ -36,11 +46,15 @@ RUN true \
         postgresql-12-postgis-3 \
         postgresql-12-postgis-3-scripts \
         # PHP and Apache 2.
-        php \
-        php-intl \
-        php-pgsql \
+        php7.4-cli \
+        php7.4-common \
+        php7.4-intl \
+        php7.4-pgsql \
+        php7.4-json \
+        php7.4-opcache \
+        php7.4-readline \
         apache2 \
-        libapache2-mod-php \
+        libapache2-mod-php7.4 \
         # Python 3.
         python3-dev \
         python3-pip \
@@ -50,7 +64,12 @@ RUN true \
         # Misc.
         git \
         curl \
-        sudo
+        sudo \
+        util-linux \
+    && sh /usr/local/bin/verify-php \
+    && pro detach --assume-yes \
+    && apt-get purge -y ubuntu-pro-client \
+    && rm -rf /var/lib/ubuntu-advantage /var/log/ubuntu-advantage* /var/lib/apt/lists/*
 
 # Configure postgres.
 RUN true \
@@ -119,6 +138,8 @@ COPY start.sh /app/start.sh
 COPY startapache.sh /app/startapache.sh
 COPY startpostgres.sh /app/startpostgres.sh
 
+RUN sh /usr/local/bin/verify-php
+
 # Collapse image to single layer.
 FROM scratch
 
@@ -134,4 +155,4 @@ ENV NOMINATIM_PASSWORD qaIACxO6wMR3
 # how many threads should be use for importing
 ENV THREADS=16
 
-CMD /app/start.sh
+CMD ["sh", "/app/startapache.sh"]

@@ -1,3 +1,10 @@
+> **Correction de sécurité préparée le 23 octobre 2026** : lire
+> [l'analyse, les validations et la procédure](docs/security-2026-10-23.md)
+> avant toute construction ou opération. Les exemples historiques ci-dessous
+> ne constituent pas la procédure de remédiation. Ne pas reconstruire/remplacer
+> la DB avant vérification des montages et restauration d'une sauvegarde.
+> La CI de cette préparation valide les sources uniquement, sans publication ni déploiement.
+
 # Nominatim Docker (Nominatim version 3.6)
 
 ## Manual DB

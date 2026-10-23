@@ -1,2 +1,9 @@
 .project
 /.settings/
+
+# Local security evidence and subscription secrets (never commit these).
+/pro-attach-config*.yaml
+/pro-attach-config*.yml
+/security-evidence/
+/__pycache__/
+**/__pycache__/
